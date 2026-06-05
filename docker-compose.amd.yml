@@ -1,0 +1,13 @@
+services:
+  lemonade:
+    privileged: true
+    devices:
+      - /dev/dxg:/dev/dxg
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl
+    environment:
+      - 'HSA_OVERRIDE_GFX_VERSION=11.0.0'
+      - 'LD_LIBRARY_PATH=/usr/lib/wsl/lib'
+      - 'LEMONADE_LLAMACPP_BACKEND=rocm'
+    group_add:
+      - video

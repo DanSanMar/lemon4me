@@ -1,0 +1,56 @@
+Paso 1: Crear el archivo del Script
+Abre un editor de texto (Bloc de notas, VS Code, etc.).
+
+Copia el código de PowerShell que te proporcioné anteriormente.
+
+Guárdalo con el nombre check_amd_reqs.ps1 en la carpeta raíz de tu proyecto (donde tienes el docker-compose.yml).
+
+Paso 2: Ejecutar el Script de Comprobación
+Para que el script pueda leer los datos del hardware y los drivers correctamente, debe tener permisos elevados:
+
+Haz clic derecho en el botón de Inicio y selecciona Terminal (Administrador) o PowerShell (Administrador).
+
+Navega hasta la carpeta de tu proyecto:
+
+PowerShell
+cd "C:\Ruta\A\Tu\Proyecto"
+Ejecuta el script:
+
+PowerShell
+./check_amd_reqs.ps1
+Nota: Si Windows te da un error de ejecución de scripts, usa: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process y luego vuelve a ejecutarlo.
+
+Paso 3: Revisar el archivo info_check.txt
+Una vez termine, el script habrá creado un archivo llamado info_check.txt. Ábrelo y fíjate especialmente en la sección "SUGERENCIA PARA .env".
+
+Si dice HSA_OVERRIDE_GFX_VERSION=11.0.1, asegúrate de actualizar tu docker-compose.yml o crear un archivo .env con ese valor.
+
+Paso 4: Activar el Modo Turbo (Recomendado)
+Según la documentación de AMD que adjuntaste (infoamd.txt), para obtener el mejor rendimiento en la NPU antes de lanzar Docker, ejecuta esto en la misma terminal:
+
+PowerShell
+cd C:\Windows\System32\AMD
+.\xrt-smi.exe configure --pmode turbo
+Paso 5: Lanzar el Proyecto
+Si todo en el info_check.txt aparece como "OK" o "Compatible", ya puedes levantar los contenedores:
+
+🛡️ REPORTE DE REQUISITOS - PROYECTO LEMONADE KALI
+----------------------------------------------------
+FECHA: 18/05/2026 17:00:00
+
+[CPU]
+Modelo: AMD Ryzen 9 7940HS w/ Radeon 780M Graphics
+Estado: Compatible con Ryzen AI / NPU (FastFlowLM).
+
+[GPU/DRIVERS]
+Modelo: AMD Radeon(TM) 780M Graphics
+Driver: 31.0.24002.92 (Adrenalin 24.x+ recomendado)
+Backend: ROCm compatible via WSL2.
+
+[VIRTUALIZACIÓN]
+WSL2: Habilitado.
+Docker Engine: v24.0+ (Linux Containers).
+
+[OPTIMIZACIÓN RECOMENDADA]
+Variable: HSA_OVERRIDE_GFX_VERSION=11.0.1
+Modo NPU: Se recomienda activar 'turbo' en xrt-smi.

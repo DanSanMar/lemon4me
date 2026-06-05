@@ -1,0 +1,54 @@
+# =================================================================
+# .gitignore - CONFIGURACIÓN PARA IA PENTEST LAB
+# =================================================================
+# --- 1. Seguridad y Secretos (CRÍTICO) ---
+# Nunca subir credenciales, tokens de Hugging Face o claves cifradas
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+id_rsa*
+
+# --- 2. Archivos Dinámicos y Volúmenes Locales del Proyecto ---
+# Ignoramos el contenido de los directorios de trabajo para que estén vacíos en Git,
+# pero permitimos conservar la carpeta en sí mediante archivos .gitkeep (ver nota abajo).
+dockerlabs/*
+!dockerlabs/.gitkeep
+
+kalievi/*
+!kalievi/.gitkeep
+
+kalirep/*
+!kalirep/.gitkeep
+
+kalidep/*
+!kalidep/.gitkeep
+
+# Archivos de control temporales generados por los scripts y orquestadores
+kalidep/active_lab.txt
+info_check.txt
+
+# --- 3. Caché y Archivos de Entorno de Python ---
+# Ignorar la caché que genera Python al ejecutar init_platform.py o agent_pentest.py
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# --- 4. Logs del Sistema ---
+# Evitar subir logs masivos de ejecución
+*.log
+kalievi/agent_daemon.log
+
+# --- 5. Archivos del Sistema Operativo ---
+# Archivos basura que generan Windows y macOS automáticamente en las carpetas
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini

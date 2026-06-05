@@ -1,0 +1,101 @@
+services:
+  
+  lemonade:
+    image: ghcr.io/lemonade-sdk/lemonade-server:latest
+    container_name: lemonade_server
+    shm_size: '2gb'
+    volumes:
+      - /usr/lib/wsl:/usr/lib/wsl
+      - lemonade-cache:/root/.cache/huggingface
+      - lemonade-llama:/opt/lemonade/llama
+      - lemonade-recipe:/root/.cache/lemonade
+    ports:
+      - "127.0.0.1:13305:13305"
+    networks:
+      - pentest_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13305/api/v1/models"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui
+    depends_on:
+      lemonade:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:8080"
+    environment:
+      - 'WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}'
+      # Ajustado a la ruta API oficial de Lemonade
+      - OPENAI_API_BASE_URL=http://lemonade:13305/api/v1
+      - OPENAI_API_KEY=lemonade
+    volumes:
+      - webui_storage:/app/backend/data
+    networks:
+      - pentest_net
+    restart: unless-stopped
+
+  kali_workspace:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kali_workspace
+    privileged: true 
+    # CONTROL DE PERMISOS: Forzamos a que corra como usuario kali (1000) 
+    # y grupo docker del host (generalmente 999 en WSL/Ubuntu).
+    #user: "1000:999"
+    user: "0:0" # Por ahora lo dejamos como root para evitar problemas de permisos con herramientas de Kali, pero mapeamos el grupo docker para que pueda usar el socket
+    environment:
+      - LEMONADE_SERVER=http://lemonade:13305/api/v1
+      - HF_API_KEY=${HF_API_KEY} # Mapeo seguro desde el archivo .env del host
+      - 'DEFAULT_MODEL=Qwen3.5-4B-GGUF' # Un modelo intermedio para tareas generales, más potente que el 0.6B pero aún ligero para Kali
+      - 'CODE_MODEL=Qwen3-Coder-30B-A3B-Instruct-GGUF' # El mejor modelo de código que puedes usar con 32GB de RAM, ideal para auditoría y generación de exploits
+      - 'TEXT_MODEL=DeepSeek-Qwen3-8B-GGUF' # Un modelo de texto avanzado, perfecto para análisis de vulnerabilidades y generación de reportes detallados
+    networks:
+      - pentest_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./kalievi:/home/kali/evidences
+      - ./kalirep:/home/kali/reports
+      - ./kalidep:/home/kali/autodeploy 
+      - ./agent_pentest.py:/home/kali/scripts/agent_pentest.py
+    restart: unless-stopped
+    depends_on:
+      lemonade:
+        condition: service_healthy
+    
+  dockerlabs:
+    build:
+      context: .
+      dockerfile: Dockerfile.dockerlabs
+    container_name: labs_dockerd
+    user: "0:999" # Corre como root interno pero mapea al grupo docker del host (999)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # 🔌 Solo él tiene el socket
+      - ./dockerlabs:/opt/dockerlabs # Vigilando la misma carpeta que ve Kali
+      - ./kalidep:/opt/autodeploy # Para poder leer los scripts de despliegue si los necesita
+      - ./init_dockerlabs.py:/opt/init_dockerlabs.py # Mapeamos el script de la raíz directamente dentro del contenedor
+    networks:
+      - pentest_net # Comparte red con Kali para meter a las víctimas ahí
+    restart: unless-stopped
+    # damos 30 segundos para apagar los laboratorios hijos antes de que Compose lo fulmine
+    stop_grace_period: 30s
+
+networks:
+  pentest_net:
+    name: pentest_net
+    driver: bridge
+
+volumes:
+  webui_storage:
+  lemonade-cache:
+  lemonade-llama:
+  lemonade-recipe:
+  kalievi:
+  kaliscr:
+  kalirep:
+  kalidep:
